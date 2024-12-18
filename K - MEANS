@@ -1,0 +1,65 @@
+whisky <- read.csv("whiskies.txt")
+glimpse(whisky)
+rownames(whisky) <- whisky$Distillery
+whisky_clean <- whisky %>% 
+select(-c(RowID,Distillery,Postcode,Latitude,Longitude))
+whisky_clean
+anyNA(whisky_clean)
+summary(whisky_clean)
+RNGkind(sample.kind = "Rounding")
+set.seed(100)
+whiz_cluster <- kmeans(whisky_clean,centers = 3) 
+whiz_cluster$size
+whiz_cluster$centers
+as.data.frame(whiz_cluster$cluster)
+whiz_cluster$iter
+whiz_cluster$withinss
+whiz_cluster$tot.withinss
+whiz_cluster$betweenss
+whiz_cluster$totss
+whiz_cluster$betweenss/whiz_cluster$totss
+RNGkind(sample.kind = "Rounding")
+set.seed(100)
+whiz_cluster80 <- kmeans(whisky_clean,centers = 80)
+whiz_cluster80$betweenss/whiz_cluster80$totss
+whiz_cluster80$withinss
+library(factoextra)
+fviz_nbclust(
+  x = whisky_clean, #data untuk clustering
+  FUNcluster = kmeans, #algoritma kmeans
+  method = "wss" #berdasarkan wss
+)
+RNGkind(sample.kind = "Rounding")
+set.seed(100)
+whisky_cluster_op <- kmeans(whisky_clean,centers = 5)
+whisky_cluster_op$tot.withinss #5 cluster
+whiz_cluster$tot.withinss #3 cluster
+whisky_cluster_op$betweenss/whisky_cluster_op$totss
+whisky_cluster_op$size
+whisky_clean$cluster <- as.factor(whisky_cluster_op$cluster)
+head(whisky_clean)
+as.data.frame(whisky_cluster_op$centers)
+whisky_centroid <- whisky_clean %>% 
+  group_by(cluster) %>% 
+  summarise_all(mean)
+whisky_centroid
+library(tidyr)
+whisky_centroid %>% 
+  pivot_longer(-cluster) %>% 
+  group_by(name) %>% 
+  summarize(
+    kelompok_min = which.min(value),
+    kelompok_max = which.max(value))
+whisky_centroid %>% 
+  pivot_longer(-cluster) %>%
+  ggplot(aes(x = value, y = tidytext::reorder_within(name, value, cluster), fill = value)) +
+  geom_col() +
+  scale_fill_gradient(low = "pink", high = "navy") +
+  facet_wrap(~cluster, scales = "free_y") +
+  theme_minimal() +
+  labs(title = "Cita rasa tiap Cluster",
+       y = "",
+       x = "Skor")
+whisky_clean["Laphroig",]
+whisky_clean[whisky_clean$cluster==2,]
+
