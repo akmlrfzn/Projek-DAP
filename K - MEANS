@@ -1,4 +1,4 @@
----
+
 title: "Unsupervised Learning"
 date: "`r format(Sys.Date(), '%B %e, %Y')`"
 output:
@@ -21,7 +21,7 @@ output:
 editor_options:
   markdown:
     wrap: 72
----
+
 
 <style>
 
@@ -30,7 +30,6 @@ text-align: justify}
 
 </style>
 
-```{r setup, include=FALSE}
 # clear-up the environment
 rm(list = ls())
 
@@ -42,12 +41,8 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-options(scipen = 999)
-```
-
-```{r}
 library(dplyr)
-```
+
 
 
 <style>
@@ -76,10 +71,6 @@ Machine learning bertujuan untuk membuat mesin yang belajar berdasarkan data. Ma
 # Clustering
 
 
-```{r, out.width = "70%", echo = FALSE, fig.align = "center"}
-knitr::include_graphics("kmeans.jpg")
-```
-
 * Body: tingkat kekuatan rasa (light/heavy)
 * Sweetness: tingkat rasa manis
 * Smoky: tingkat rasa asap
@@ -94,16 +85,12 @@ knitr::include_graphics("kmeans.jpg")
 * Floral: tingkat rasa bunga
 
 #### Read Data 
-
-```{r}
 whisky <- read.csv("whiskies.txt")
 glimpse(whisky)
-```
-note: k-means hanya bisa dilakukan pada data dengan tipe data numerik 
 
 Cleansing data
 
-```{r}
+
 # meng-assign nilai dari kolom Distillery menjadi rownames
 rownames(whisky) <- whisky$Distillery
 
@@ -111,15 +98,15 @@ rownames(whisky) <- whisky$Distillery
 whisky_clean <- whisky %>% 
   select(-c(RowID,Distillery,Postcode,Latitude,Longitude))
 whisky_clean
-```
+
 
 #### EDA & Scaling
 
 Cek missing values
-```{r}
+
 # cek NA
 anyNA(whisky_clean)
-```
+
 
 Cek skala antar variabel
 summary(whisky_clean)
