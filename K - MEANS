@@ -1,55 +1,293 @@
+---
+title: "Unsupervised Learning"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output:
+  word_document:
+    toc: true
+    toc_depth: '4'
+  html_document:
+    toc: true
+    toc_depth: 4
+    highlight: zenburn
+    theme: sandstone
+    toc_float:
+      collapsed: true
+    df_print: paged
+    fig_width: 7
+    fig_height: 5
+  pdf_document:
+    toc: true
+    toc_depth: '4'
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+<style>
+
+body {
+text-align: justify}
+
+</style>
+
+```{r setup, include=FALSE}
+# clear-up the environment
+rm(list = ls())
+
+# chunk options
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  comment = "#>"
+)
+
+options(scipen = 999)
+```
+
+```{r}
+library(dplyr)
+```
+
+
+<style>
+
+body {
+text-align: justify}
+
+</style>
+
+# Introduction
+Machine learning bertujuan untuk membuat mesin yang belajar berdasarkan data. Machine learning terbagi dua:
+
+**1. Supervised Learning**: 
+
+* Memiliki target variable. 
+* Tujuan: membuat model prediksi dengan training data.
+* Model di-evaluasi dengan testing data (karena memiliki target variable)
+
+**2. Unsupervised Learning**: 
+
+* Tidak memiliki target variable. 
+* Tujuan: mencari pola dalam data, yang berguna untuk menghasilkan informasi. Digunakan pada tahap pre-processing maupun Exploratory Data Analysis (EDA).
+* Tidak ada target variable sehingga tidak ada evaluasi model  
+
+
+# Clustering
+
+
+```{r, out.width = "70%", echo = FALSE, fig.align = "center"}
+knitr::include_graphics("kmeans.jpg")
+```
+
+* Body: tingkat kekuatan rasa (light/heavy)
+* Sweetness: tingkat rasa manis
+* Smoky: tingkat rasa asap
+* Medicinal: tingkat rasa pahit (obat)
+* Tobacco: tingkat rasa tembakau
+* Honey: tingkat rasa madu
+* Spicy: tingkat rasa pedas
+* Winey: tingkat rasa anggur
+* Nutty: tingkat rasa kacang
+* Malty: tingkat rasa gandum
+* Fruity: tingkat rasa buah
+* Floral: tingkat rasa bunga
+
+#### Read Data 
+
+```{r}
 whisky <- read.csv("whiskies.txt")
 glimpse(whisky)
+```
+note: k-means hanya bisa dilakukan pada data dengan tipe data numerik 
+
+Cleansing data
+
+```{r}
+# meng-assign nilai dari kolom Distillery menjadi rownames
 rownames(whisky) <- whisky$Distillery
+
+# membuang kolom yang tidak digunakan
 whisky_clean <- whisky %>% 
-select(-c(RowID,Distillery,Postcode,Latitude,Longitude))
+  select(-c(RowID,Distillery,Postcode,Latitude,Longitude))
 whisky_clean
+```
+
+#### EDA & Scaling
+
+Cek missing values
+```{r}
+# cek NA
 anyNA(whisky_clean)
+```
+
+Cek skala antar variabel
 summary(whisky_clean)
-RNGkind(sample.kind = "Rounding")
-set.seed(100)
+
+#kita mau coba buat 3 cluster
 whiz_cluster <- kmeans(whisky_clean,centers = 3) 
+
+
+**Hasil k-means:**
+
+Banyaknya observasi pada tiap cluster
+# jumlah data tiap cluster
 whiz_cluster$size
+
+
+Letak pusat cluster/centroid, biasa digunakan untuk profiling cluster
+# letak pusat cluster atau centroid
 whiz_cluster$centers
+
+Label cluster untuk tiap observasi
+# hasil clustering (label cluster untuk tiap observasi)
 as.data.frame(whiz_cluster$cluster)
+
+Banyaknya pengulangan (iterasi) algoritma k-means sampai dihasilkan cluster yang stabil
+# berapa kali pengulangan sampai menghasilkan kelompok yang stabil
 whiz_cluster$iter
+
+Kebaikan hasil clustering dapat dilihat dari 3 nilai:
+
+1. Within Sum of Squares (`$withinss`): jumlah jarak kuadrat dari tiap observasi ke centroid tiap cluster.
+2. Between Sum of Squares (`$betweenss`): jumlah jarak kuadrat terbobot dari tiap centroid ke rata-rata global. Dibobotkan berdasarkan banyaknya observasi pada cluster.
+3. Total Sum of Squares (`$totss`): jumlah jarak kuadrat dari tiap observasi ke rata-rata global.
+
+
+# cek nilai wss
 whiz_cluster$withinss
 whiz_cluster$tot.withinss
+
+# cek nilai bss
 whiz_cluster$betweenss
+
+# cek nilai tss
 whiz_cluster$totss
+
+# cek rasio bss/tss
 whiz_cluster$betweenss/whiz_cluster$totss
+
+**Clustering yang baik:**
+
+# buat model kmeans
 RNGkind(sample.kind = "Rounding")
 set.seed(100)
+
 whiz_cluster80 <- kmeans(whisky_clean,centers = 80)
+
+# hitung rasio bss/totss
 whiz_cluster80$betweenss/whiz_cluster80$totss
+
+# cek nilai wss
 whiz_cluster80$withinss
+
 library(factoextra)
+
 fviz_nbclust(
   x = whisky_clean, #data untuk clustering
   FUNcluster = kmeans, #algoritma kmeans
   method = "wss" #berdasarkan wss
 )
+
+*K optimum dari data whisky adalah 5
+Kontruksi kembali k-means clustering menggunakan k optimum
+
 RNGkind(sample.kind = "Rounding")
 set.seed(100)
+
+# k-means dengan k optimum
 whisky_cluster_op <- kmeans(whisky_clean,centers = 5)
+
+# WSS
 whisky_cluster_op$tot.withinss #5 cluster
 whiz_cluster$tot.withinss #3 cluster
+
+# BSS/TSS
 whisky_cluster_op$betweenss/whisky_cluster_op$totss
+
+# Cek berapa besar tiap cluster
 whisky_cluster_op$size
+
+#### Interpretation: Cluster Profiling
+
+Membuat kolom baru yang berisikan informasi label dari cluster yang terbentuk menggunakan k optimum
+
 whisky_clean$cluster <- as.factor(whisky_cluster_op$cluster)
+
+# Cek head data
 head(whisky_clean)
+
+
+**Grouping data based on cluster label**
+
+Melakukan grouping berdasarkan cluster yang terbentuk, untuk mengetahui karakteristik dari masing-masing cluster
 as.data.frame(whisky_cluster_op$centers)
+
+# melakukan profiling cluster dari data asli (supaya nantinya jika ketemu dengan perlu data yg perlu discaling sebelum kmeans nya , interpretasinya tidak salah)
 whisky_centroid <- whisky_clean %>% 
   group_by(cluster) %>% 
   summarise_all(mean)
 whisky_centroid
+
+
+⚙️ Mempermudah profiling: tabel yang menampilkan cluster dengan nilai terendah dan tertinggi untuk masing-masing karakteristik whisky
 library(tidyr)
+
 whisky_centroid %>% 
   pivot_longer(-cluster) %>% 
   group_by(name) %>% 
   summarize(
     kelompok_min = which.min(value),
     kelompok_max = which.max(value))
+
+
+💡 Profiling tiap cluster
+
+**Cluster 1** :
+
+  - Paling tinggi di cita rasa : Fruity, Honey, Nutty, winey
+  
+  - Paling rendah di cita rasa : Medicinal, Tobacco
+  
+  - Label : Fruity whisky
+
+
+**Cluster 2** :
+
+  - Paling tinggi di cita rasa : Body, Medicinal, Smoky, Tobacco
+  
+  - Paling rendah di cita rasa : Floral, Malty, Sweetness, Honey
+  
+  - Label : Bitter whisky
+
+**Cluster 3** :
+
+  - Paling tinggi di cita rasa : Floral
+  
+  - Paling rendah di cita rasa : Body
+  
+  - Label : Floral whisky
+  
+  
+**Cluster 4** :
+
+  - Paling tinggi di cita rasa : -
+  
+  - Paling rendah di cita rasa : Fruity
+  
+  - Label : Mediocore whisky
+  
+**Cluster 5** :
+
+  - Paling tinggi di cita rasa : Spicy, Sweetness
+  
+  - Paling rendah di cita rasa : -
+  
+  - Label : Spicy & Sweetness whisky
+
+
+⚙️Untuk mempermudah profiling kita akan membentuk grafik yang mengurutkan cita rasa pada setiap cluster
+
 whisky_centroid %>% 
   pivot_longer(-cluster) %>%
   ggplot(aes(x = value, y = tidytext::reorder_within(name, value, cluster), fill = value)) +
@@ -60,6 +298,17 @@ whisky_centroid %>%
   labs(title = "Cita rasa tiap Cluster",
        y = "",
        x = "Skor")
+
+* Identifikasi whisky "Laphroig" terdapat di cluster berapa
+
+# your code here
 whisky_clean["Laphroig",]
+
+* Memanggil whisky yang satu cluster dengan "Laphroig"
 whisky_clean[whisky_clean$cluster==2,]
+
+
+
+
+
 
